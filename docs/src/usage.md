@@ -6,58 +6,13 @@ When loading and storing from BufferIO I/O types, you can always manually reques
 It can also be used in extremely performance-sensitive situations when you can request a large buffer, do a single boundscheck, then load many values inbounds.
 However, most users should just use the Inscription functions below, as they are usually fast enough, and cover most use cases.
 
-## Endian convenience namespaces
-A given format is typically only little-endian or big-endian. When working with exclusively little-endian data, it's annoying to have to pass `LittleEndian()` as the `Encoding` to all functions.
-Inscription provides the modules `Inscription.Little` and `Inscription.Big`, which export convenience functions that automatically forward `LittleEndian()` and `BigEndian()`, such that e.g.:
-
-```julia
-using Inscription.Little: encode!
-
-encode!(mem, UInt32(123))
-```
-
-Is shorthand for:
-
-```julia
-using Inscription: encode!
-
-encode!(mem, UInt32(123), LittleEndian())
-```
-
-In all examples below, I will use the more verbose `encode!(mem, UInt32(123), LittleEndian())` for clarity.
-The full list of functions in these modules is on the [Reference](reference.md) page.
-
 # Encoding and decoding
+*Encoding* and *decoding* here means reading from / writing to `MemoryViews`, whereas *loading* and *storing* refers to reading from / writing to BufferIO types.
+
 The functions mentioned below: [`encode!`](@ref), [`decode`](@ref), [`decode_exact`](@ref) and [`decode_next`](@ref) each have `try_*` versions. The plain functions throw exceptions on errors, whereas the `try_` versions return the exception instead. On the happy path, the throwing versions are slightly more efficient, so use the `try_` versions only if you plan to actually handle errors.
 
-### Errors
-A [`DecodeError`](@ref) or [`EncodeError`](@ref) has a `kind`, which says what went wrong, and a `payload`.
-The payload is `Some(x)` when the data is invalid or the value can't be encoded, where `x` says why, and `nothing` otherwise.
-For example, a codec that parses decimal integers may give the payload `Some(Overflow)`, so that you can try again with a wider type.
-Since a failed load consumes nothing, the second try reads the same bytes:
-
-```julia
-x = try_load(io, UInt8, Decimal())
-if x isa DecodeError && x.payload == Some(Overflow)
-    x = try_load(io, UInt16, Decimal())
-end
-```
-
-A codec that gives no reason gives the payload `Some(nothing)`.
-The errors of a type have the same concrete type for every kind, so checking them is cheap.
-Compare errors with `==`, which compares their kind and payload, but not their type, or check `err.kind` directly.
-
-### Encoding values
-Encoding functions generally have the signature `(try_)encode!(mem, [i::Integer], x, ::Encoding)`, and they mean: Encode `x` into `mem` starting at position `i` with the given `Encoding`, and return how many bytes were written (or an error, for the `try_` variant).
-The argument `mem` is converted to a `MutableMemoryView{UInt8}`.
-If `i` is omitted, it defaults to `1`.
-
-Example: `encode!(zeros(UInt8, 4), UInt32(55), LittleEndian()) === 4`
-
-To find the number of bytes a value `x` takes up in some encoding, encode it: `try_encode!` returns the number of bytes written. To only find the size, encode `x` into scratch memory of [`max_encoded_size`](@ref) bytes, and reuse the same scratch memory for many values, rather than allocating it for each. If `max_encoded_size` is [`Inscription.Unbounded`](@ref), there is no such size, so [`store`](@ref) `x` into a `BufferIO.VecWriter`, which grows as needed, instead. There is no function that gives the size without encoding, since it would duplicate the codec, and could disagree with it.
-
 ### Decoding values
-The decoding signature is generally: `(try_)decode(_exact,_next)(mem, [i::Integer,] ::Type{T}, enc::Encoding)`, and they mean: Decode a `T` from `mem` starting at position `i`, with the given `Encoding`, and return the `T` (or an error, for the `try_` variant).
+The decoding signatures are generally: `(try_)decode(_exact,_next)(mem, [i::Integer,] ::Type{T}, enc::Encoding)`, and they mean: Decode a `T` from `mem` starting at position `i`, with the given `Encoding`, and return the `T` (or an error, for the `try_` variant).
 Like the encoding functions, `mem` is converted to an `ImmutableMemoryView{UInt8}`, and `i` defaults to 1 if omitted.
 
 Example: `decode(UInt8[1,2,3,4], UInt32, LittleEndian()) === 0x04030201`
@@ -67,6 +22,15 @@ This is useful if the `T` is stored in a variable number of bytes, for example a
 
 The function [`decode_exact`](@ref) throws an error if `mem` contains any trailing data. This can be used to ensure `mem` contains exactly the `T`.
 E.g. a hypothetical decimal integer decoder would fail on the input memory "123abc", as "abc" is not a valid decimal integer, whereas the normal `decode` would read the three bytes and return `123`.
+
+### Encoding values
+Encoding functions generally have the signature `(try_)encode!(mem, [i::Integer], x, ::Encoding)`, and they mean: Encode `x` into `mem` starting at position `i` with the given `Encoding`, and return how many bytes were written (or an error, for the `try_` variant).
+The argument `mem` is converted to a `MutableMemoryView{UInt8}`.
+If `i` is omitted, it defaults to `1`.
+
+Example: `encode!(zeros(UInt8, 4), UInt32(55), LittleEndian()) === 4`
+
+To find the number of bytes a value `x` takes up in some encoding, encode it: `try_encode!` returns the number of bytes written.
 
 ## Bulk encoding and decoding
 When encoding or decoding multiple values together, it can be more efficient to encode or decode entire arrays of values in bulk.
@@ -144,3 +108,38 @@ end
 
 The above could also be done directly with `try_load(io, NTuple{3, UInt64}, LittleEndian())`,
 so the example above is only for demonstration purposes.
+
+## Endian convenience namespaces
+The most common format for reading and writing values are the native binary representation. In Inscription, these are the encodings `LittleEndian()` and `BigEndian()`. When working with e.g. exclusively little-endian data, it's annoying to have to pass `LittleEndian()` as the `Encoding` to all functions.
+
+Inscription provides the modules `Inscription.Little` and `Inscription.Big`, which export convenience functions that automatically forward `LittleEndian()` and `BigEndian()`, such that e.g.:
+
+```julia
+using Inscription.Little: encode!
+
+encode!(mem, UInt32(123))
+```
+
+Is shorthand for:
+
+```julia
+using Inscription: encode!
+
+encode!(mem, UInt32(123), LittleEndian())
+```
+
+In all examples below, I will use the more verbose `encode!(mem, UInt32(123), LittleEndian())` for clarity.
+The full list of functions in these modules is on the [Reference](reference.md) page.
+
+
+### Handling errors
+The `try_*` functoin may return [`DecodeError`](@ref) or [`EncodeError`](@ref) - the same exceptions thrown by the non-`try_*` functions.
+
+
+These errors currently have two public properties: A `.kind` property, and a `.payload` property.
+The `.kind` is [`DecodeErrorKind`](@ref Inscription.DecodeErrorKinds.DecodeErrorKind) or [`EncodeErrorKind`](@ref Inscription.EncodeErrorKinds.EncodeErrorKind) - enums stating what went wrong.
+The `.payload` is `Union{Nothing, Some{T}}` - `nothing` unless `.kind` is `InvalidData` (for decoding errors) or `InvalidValue` (for encoding errors).
+
+This allow codecs to return specific errors saying why a value could not be decoded or encoded.
+For example, a codec that parses decimal integers may give the payload `Some(Overflow)`, so that you can try again with a wider type.
+A codec that that gives no reason for its failure will typically gives the payload `Some(nothing)`.

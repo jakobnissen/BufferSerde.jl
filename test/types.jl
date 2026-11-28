@@ -341,10 +341,10 @@ end
     data = repeat([0x01, 0x00, 0x00, 0x00, 0x02, 0x01], 100)
     @test sum_tuples(CursorReader(data)) == 400
     io = CursorReader(data)
-    @test (@allocated sum_tuples(io)) == 0
+    @test_allocs (@allocated sum_tuples(io)) == 0
     w = VecWriter()
     sizehint!(w.vec, 1000)
     store_tuple(w) = store(w, (0x01, 0x02030405, true), LittleEndian())
     store_tuple(w)
-    @test (@allocated store_tuple(w)) == 0
+    @test_allocs (@allocated store_tuple(w)) == 0
 end

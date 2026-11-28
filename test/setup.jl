@@ -9,6 +9,16 @@ bytes_be(x) = collect(reinterpret(UInt8, [hton(x)]))
 
 is_err(x, kind) = x isa DecodeError && x.kind === kind
 
+# Allocation freedom is only a goal from Julia 1.14, which, among other things, no
+# longer boxes un-inlined `Union` return values with pointerful members. On earlier
+# versions, allocation tests are recorded as skipped instead of run.
+const TEST_ALLOCATIONS = VERSION >= v"1.14-"
+
+macro test_allocs(ex)
+    test = TEST_ALLOCATIONS ? Symbol("@test") : Symbol("@test_skip")
+    return Expr(:macrocall, test, __source__, esc(ex))
+end
+
 # Like `@test_throws err expr`, but compares the error with `==`, which ignores the type
 # of the payloads of a `DecodeError` or `EncodeError`, so `DecodeError(EndOfInput)` is
 # the error of any type

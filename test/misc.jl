@@ -203,8 +203,8 @@ end
     encode_vector!(v, x) = encode!(v, 2, x, BigEndian())
     decode_vector(bytes, 2)
     encode_vector!(v, 0x0102)
-    @test (@allocated decode_vector(bytes, 2)) == 0
-    @test (@allocated encode_vector!(v, 0x0102)) == 0
+    @test_allocs (@allocated decode_vector(bytes, 2)) == 0
+    @test_allocs (@allocated encode_vector!(v, 0x0102)) == 0
 end
 
 @testset "Little and Big" begin
@@ -322,15 +322,15 @@ end
     end
     data = rand(UInt8, 1001)
     sum_exact(CursorReader(data))
-    @test (@allocated sum_exact(CursorReader(data))) ≤ 64
+    @test_allocs (@allocated sum_exact(CursorReader(data))) ≤ 64
     sum_loads(CursorReader(data))
     sum_chars(CursorReader(data))
-    @test (@allocated sum_loads(CursorReader(data))) ≤ 64 # the reader itself
-    @test (@allocated sum_chars(CursorReader(data))) ≤ 64
+    @test_allocs (@allocated sum_loads(CursorReader(data))) ≤ 64 # the reader itself
+    @test_allocs (@allocated sum_chars(CursorReader(data))) ≤ 64
     io = VecWriter(sizehint!(UInt8[], 4000))
     store_loop(io, 1)
     empty!(io.vec)
-    @test (@allocated store_loop(io, 900)) == 0
+    @test_allocs (@allocated store_loop(io, 900)) == 0
     function sum_indexed(mem)
         s = UInt64(0)
         i = 1
@@ -342,12 +342,12 @@ end
         return s
     end
     sum_indexed(ImmutableMemoryView(data))
-    @test (@allocated sum_indexed(ImmutableMemoryView(data))) == 0
+    @test_allocs (@allocated sum_indexed(ImmutableMemoryView(data))) == 0
     bulk_allocs(dst, mem) = @allocated decode_all!(dst, mem, BigEndian())
     dst = MemoryView(zeros(UInt32, 250))
     mem = ImmutableMemoryView(data)
     bulk_allocs(dst, mem)
-    @test bulk_allocs(dst, mem) == 0
+    @test_allocs bulk_allocs(dst, mem) == 0
     # Returning an `EncodeError` doesn't allocate
     function count_invalid(io, chars)
         k = 0
@@ -359,5 +359,5 @@ end
     chars = MemoryView(rand(['a', 'λ'], 100))
     io = VecWriter(sizehint!(UInt8[], 200))
     count_invalid(io, chars)
-    @test (@allocated count_invalid(io, chars)) == 0
+    @test_allocs (@allocated count_invalid(io, chars)) == 0
 end

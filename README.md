@@ -5,14 +5,14 @@
 [![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://biojulia.github.io/Inscription.jl/dev)
 [![](https://codecov.io/gh/BioJulia/Inscription.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/BioJulia/Inscription.jl)
 
-Inscription.jl provides abstractions for reading and writing values to byte arrays (via [MemoryViews.jl](https://github.com/BioJulia/MemoryViews.jl)) or to I/O (via [BufferIO.jl](https://github.com/BioJulia/BufferIO.jl)).
+Inscription.jl provides fast, zero-allocation abstractions for reading and writing values to byte arrays (via [MemoryViews.jl](https://github.com/BioJulia/MemoryViews.jl)) or to I/O (via [BufferIO.jl](https://github.com/BioJulia/BufferIO.jl)).
 
-It can be considered a more powerful version of Base's `read(::IO, T)`, `write(::IO, ::T)` as well as `unsafe_load`/`unsafe_store!`.
-Alternatively, it can be viewed as an extension of BufferIO.jl, which only supports IO on bytes, to support IO for all types.
+It can be considered a more powerful version of Base's `read(::IO, T)`, `write(::IO, ::T)`, or a safer `unsafe_load`/`unsafe_store!`.
+Alternatively, it can be viewed as an extension that allows writing arbitrary values of any type into the buffers provided by BufferIO.jl.
 
 You might want to use this package if you find yourself:
 * Using `unsafe_load`, `unsafe_store!` a lot,
-* Care about how much `write(::IO, ::Float32)` allocates,
+* Care about how much `write(::IO, ::Float32)` allocates or the speed of `print(::IO, ::Int32)` is,
 * Find yourself writing non-`UInt8` data into `Vector{UInt8}`s for IO performance reasons.
 
 You probably don't need this package if:
@@ -54,7 +54,7 @@ n_u16s_written = encode_all!(data, view(u16s, 1:n_u16s_loaded))
 ```
 
 ## Comparison to other packages
-* **JSON.jl / TOML/jl / BSON/jl**: Inscription.jl is lower level, in that it attempts only to read/write individual values, typically `isbits` values. Inscription.jl would typically be used to implement binary formats like BSON or BAM.
+* **JSON.jl / TOML/jl / BSON/jl**: Inscription.jl is lower level, in that it attempts only to read/write individual values. Inscription.jl would typically be used to implement binary formats like BSON or BAM.
 * **BufferIO.jl**: models I/O via buffers of bytes (`UInt8`), and is more low level. Inscription.jl builds on, and depends on BufferIO.jl, and extends an analogous model of I/O for non-`UInt8` types
 * **Serialization.jl** specifies a specific format, whereas Inscription.jl is format agnostic. Also, Serialization.jl works with any Julia type, whereas reading/writing must be implemented per type in Inscription.jl's abstractions.
 

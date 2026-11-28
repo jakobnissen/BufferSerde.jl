@@ -20,7 +20,6 @@ makedocs(
     # These two pages are recommended, you can add more as you wish
     pages = [
         "Inscription" => "index.md",
-        "Concepts" => "concepts.md",
         "Usage" => "usage.md",
         "Examples" => "examples.md",
         "Implementing a type" => "custom.md",

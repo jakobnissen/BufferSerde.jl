@@ -50,8 +50,6 @@ For the endianness encodings, the codec may be derived from the bits of the type
 * If `codec_scheme(T, e)` returns `BitsLoadable()`, the type may be loaded and stored via pointer loads or stores, or memcpy.
 * Else, if it returns `BitsStorable()`, it may be stored via pointer stores, but needs validation on loading, as not all bit patterns are valid.
 
-See more [details about the codec schemes on the Concepts page](@ref bitskinds).
-
 This simplifies the common case for e.g. `UInt32` where the endianness encoding is simply writing its bits directly to memory (possibly byte-swapping, depending on the host CPU endianness).
 
 ### Proxies
@@ -199,7 +197,7 @@ cannot be `BitsLoadable` or `BitsStorable`, because it has `sizeof(Foo) == 8`, y
 
 ### Odd-sized primitives
 As of Julia 1.14, Julia supports primitive types with a bit size not a multiple of 8, such as a 20-bit primitive type. These are known as odd-sized primitives (OSP).
-Because such types are stored with padding, OSP cannot be `BitsLoadable` or `BitsStorable`. For background, see the [Concepts page](concepts.md).
+Because such types are stored with padding, OSP cannot be `BitsLoadable` or `BitsStorable`.
 
 Furthermore, the abstractions of Inscription.jl only have the concept of reading or writing an integer number of bytes.
 There is no interface to read 20 bits (2 bytes and half of the next byte).

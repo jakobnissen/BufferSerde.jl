@@ -104,7 +104,7 @@ end
     # The motivating example: retry with a wider type, since nothing was consumed
     function load_number(io)
         x = try_load(io, UInt8, Digits())
-        if x isa DecodeError && x.payload == Some(Overflow)
+        if x isa DecodeError && x == DecodeError(InvalidData, Some(Overflow))
             return load(io, UInt16, Digits())
         end
         return x
@@ -305,6 +305,13 @@ end
     @test derr(UInt8, Digits(), InvalidData, Overflow) != DecodeError(InvalidData)
     @test derr(UInt8, Digits(), InvalidData, Overflow) != derr(UInt8, Digits(), InvalidData, NoDigits)
     @test DecodeError(Truncated) != DecodeError(EndOfInput)
+    # Also when the payload types differ, which needs care before Julia 1.12
+    wide = DecodeError{Union{Nothing, ParseError}}(InvalidData, Some(Overflow))
+    @test wide == DecodeError(InvalidData, Some(Overflow))
+    @test hash(wide) == hash(DecodeError(InvalidData, Some(Overflow)))
+    @test wide != DecodeError{Union{Nothing, ParseError}}(InvalidData, Some(nothing))
+    @test wide != DecodeError(InvalidData)
+    @test EncodeError{Union{Nothing, RangeError}}(InvalidValue, Some(OutOfRange)) == EncodeError(InvalidValue, Some(OutOfRange))
     @test eerr(Char, Ascii(), InsufficientSpace) == EncodeError(InsufficientSpace)
     @test hash(eerr(Char, Ascii(), InsufficientSpace)) == hash(EncodeError(InsufficientSpace))
     @test eerr(Char, Ascii(), InvalidValue, NotAscii('é')) != EncodeError(InvalidValue)
@@ -316,7 +323,7 @@ end
         k = 0
         for i in 1:(length(mem) - 2)
             x = try_decode(mem, i, UInt8, Digits())
-            x isa DecodeError && x.payload == Some(Overflow) && (k += 1)
+            x isa DecodeError && x == DecodeError(InvalidData, Some(Overflow)) && (k += 1)
         end
         return k
     end
@@ -324,7 +331,7 @@ end
         k = 0
         for i in 1:4:(length(mem) - 3)
             x = try_decode(mem, i, Tagged, BigEndian())
-            x isa DecodeError && x.payload == Some(Untagged) && (k += 1)
+            x isa DecodeError && x == DecodeError(InvalidData, Some(Untagged)) && (k += 1)
         end
         return k
     end
@@ -332,19 +339,19 @@ end
         k = 0
         for x in xs
             r = try_store(io, x, LittleEndian())
-            r isa EncodeError && r.payload == Some(OutOfRange) && (k += 1)
+            r isa EncodeError && r == EncodeError(InvalidValue, Some(OutOfRange)) && (k += 1)
         end
         return k
     end
     mem = ImmutableMemoryView(collect(codeunits("999 12 300 7 999")))
     @test count_overflows(mem) == 3
-    @test (@allocated count_overflows(mem)) == 0
+    @test_allocs (@allocated count_overflows(mem)) == 0
     tagged = ImmutableMemoryView(repeat([0x01, 0x01, 0x01, 0x00], 50))
     @test count_untagged(tagged) == 50
-    @test (@allocated count_untagged(tagged)) == 0
+    @test_allocs (@allocated count_untagged(tagged)) == 0
     xs = MemoryView([Bounded(Odd16(0x2001)), Bounded(Odd16(0x0001))])
     io = VecWriter(sizehint!(UInt8[], 100))
     @test count_out_of_range(io, xs) == 1
     empty!(io.vec)
-    @test (@allocated count_out_of_range(io, xs)) == 0
+    @test_allocs (@allocated count_out_of_range(io, xs)) == 0
 end

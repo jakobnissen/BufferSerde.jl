@@ -298,10 +298,10 @@ if VERSION ≥ v"1.14.0-"
         bytes = collect(codeunits("aé€x"^1000))
         for (T, e) in ((Char, UTF8()), (UInt32, BigEndian()), (Tuple{UInt8, UInt32}, LittleEndian()))
             refill_allocs(BufReader(IOBuffer(bytes), 16), T, e)
-            @test refill_allocs(BufReader(IOBuffer(bytes), 16), T, e) ≤ 64
+            @test_allocs refill_allocs(BufReader(IOBuffer(bytes), 16), T, e) ≤ 64
         end
         dst = Vector{Char}(undef, 4000)
         bulk_allocs(BufReader(IOBuffer(bytes), 16), dst, UTF8())
-        @test bulk_allocs(BufReader(IOBuffer(bytes), 16), dst, UTF8()) ≤ 64
+        @test_allocs bulk_allocs(BufReader(IOBuffer(bytes), 16), dst, UTF8()) ≤ 64
     end
 end

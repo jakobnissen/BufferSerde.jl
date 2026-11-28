@@ -1,14 +1,13 @@
+Do more on docs - including making it work
+
+Then merge CI PR
+
 Announcement
     * Check examples - add exact commit in post
     * Benchmark all of them ASCII vs Base
 
-* Invalid payload?
-
-* Move to BioJulia / Inscription.jl
-* Add a GitHub repo description
 
 * Set up codecov
-* Fix up CI, and port to BioJuliaTemplate
 
 * Docs and docstrings:
     Review again

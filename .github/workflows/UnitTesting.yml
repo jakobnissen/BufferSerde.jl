@@ -24,7 +24,7 @@ jobs:
           - julia-version: nightly
             os: ubuntu-latest
             experimental: true
-          # Add a test for the oldest compatible version (here, lts),
+          # Add a test for the oldest compatible version,
           # but we do not test this for all OSs
           - julia-version: '1.11'
             os: ubuntu-latest
