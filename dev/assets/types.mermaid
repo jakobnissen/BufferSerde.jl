@@ -1,0 +1,36 @@
+%% Generate types.svg from this file with mermaid-cli, from this directory:
+%%   npx -p @mermaid-js/mermaid-cli mmdc -i types.mermaid -o types.svg -b white -c cfg.json
+%% where cfg.json contains:
+%%   {"htmlLabels":false,"flowchart":{"htmlLabels":false},"fontFamily":"sans-serif",
+%%    "themeVariables":{"fontFamily":"sans-serif"},"themeCSS":".edgeLabel rect{opacity:1;fill:#e6e6e6;}"}
+%% htmlLabels=false makes plain SVG text labels, which render inside an <img> tag.
+%% To use a system Chromium instead of letting Puppeteer download one, add `-p pptr.json`,
+%% where pptr.json contains: {"executablePath":"/usr/bin/chromium","args":["--no-sandbox"]}
+
+flowchart TD
+VarSize[Can be any size, like String?]
+PD[Contains padding on any platform? See below]
+SPR[Struct or primitive type?]
+ABP[All bitpatterns valid?]
+DBL[Declare BitsLoadable]
+IBS[Implement BitsStorable]
+CONV[Can be easily converted to/from a type with existing codec?]
+MNL[Implement Manual]
+PXY[Declare Proxy]
+RBL[All fields recursively BitsLoadable?]
+RBS[All fields recursively BitsStorable?]
+
+VarSize --> |Yes| CONV
+VarSize --> |No| PD
+PD --> |Yes| CONV
+PD --> |No| SPR
+CONV --> |Yes| PXY
+CONV --> |No| MNL
+SPR --> |Struct| RBL
+RBL --> |Yes| DBL
+RBL --> |No| RBS
+RBS --> |Yes| IBS
+RBS --> |No| CONV
+SPR --> |Primitive| ABP
+ABP --> |Yes| DBL
+ABP --> |No| IBS

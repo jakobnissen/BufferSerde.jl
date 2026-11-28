@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="referrer" content="no-referrer"/><title>Examples · Inscription.jl</title><meta name="title" content="Examples · Inscription.jl"/><meta property="og:title" content="Examples · Inscription.jl"/><meta property="twitter:title" content="Examples · Inscription.jl"/><meta name="description" content="Documentation for Inscription.jl."/><meta property="og:description" content="Documentation for Inscription.jl."/><meta property="twitter:description" content="Documentation for Inscription.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">Inscription.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Inscription</a></li><li><a class="tocitem" href="../usage/">Usage</a></li><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Reading-and-writing-custom-types"><span>Reading and writing custom types</span></a></li></ul></li><li><a class="tocitem" href="../custom/">Implementing a type</a></li><li><a class="tocitem" href="../reference/">Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/BioJulia/Inscription.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/BioJulia/Inscription.jl/blob/master/docs/src/examples.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><h3 id="Reading-and-writing-simple-binary-values"><a class="docs-heading-anchor" href="#Reading-and-writing-simple-binary-values">Reading and writing simple binary values</a><a id="Reading-and-writing-simple-binary-values-1"></a><a class="docs-heading-anchor-permalink" href="#Reading-and-writing-simple-binary-values" title="Permalink"></a></h3><p>This works similarly to Base&#39;s <code>read</code> and <code>write</code> (for readers), and <code>unsafe_load</code>, <code>unsafe_store!</code> (for memory), although these functions are not unsafe.</p><pre><code class="language-julia hljs">using BufferIO: CursorReader, VecWriter
+using Inscription.Little # little endian encodings/decodings
+
+mem = collect(b&quot;abcdefgh&quot;)
+rdr = CursorReader(mem)
+wtr = VecWriter()
+
+# Load a u32 from index 1 of mem
+# Can also use `decode_exact`, `decode_next`, or try_* versions
+# of each of these three - they have slightly different semantics.
+u32 = decode(mem, 1, UInt32)
+
+# Store that u32 back at index 5 of the same mem
+# Can also use `try_encode!` (again, slightly different semantics)
+encode!(mem, 5, u32)
+
+@assert mem == b&quot;abcdabcd&quot;
+
+# Load a u32 from the reader
+# Can also use `load_exact`, `try_load` and `try_load_exact`
+u32 = load(rdr, UInt32)
+@assert read(rdr) == b&quot;abcd&quot; # the rest, which `encode!` wrote above
+
+# Store that into the writer
+# Can also use `try_store`
+store(wtr, u32)
+
+String(wtr.vec)
+
+# output
+
+&quot;abcd&quot;</code></pre><h3 id="Reading-simple-binary-values-in-bulk"><a class="docs-heading-anchor" href="#Reading-simple-binary-values-in-bulk">Reading simple binary values in bulk</a><a id="Reading-simple-binary-values-in-bulk-1"></a><a class="docs-heading-anchor-permalink" href="#Reading-simple-binary-values-in-bulk" title="Permalink"></a></h3><p>This may be more efficient than the scalar operations above done in a loop.</p><pre><code class="language-julia hljs">using BufferIO: CursorReader, VecWriter
+using Inscription.Little # little endian encodings/decodings
+
+u8s = rand(UInt8, 128)
+f32s = rand(Float32, 32)
+wtr = VecWriter()
+rdr = CursorReader(u8s)
+
+# Fill `f32s` with `Float32`s decoded from the bytes of `data`.
+# Can also use `decode_all!`
+data = UInt8[i for i in 1:128]
+decode_every!(f32s, data)
+@assert f32s == ltoh.(reinterpret(Float32, data))
+
+# Encode all the f32s into the u8s byte array
+# Can also use `encode_all!`
+encode_every!(u8s, f32s)
+@assert u8s == reinterpret(UInt8, htol.(f32s))
+
+# Fill f32s with data loaded from the reader
+# Could also use `load_into!` or `load_all!`
+load_every!(rdr, f32s)
+
+# Write data of f32s as byte encodings into writer
+# Could also use `store_into` or `store_all`
+store_every(wtr, f32s)
+
+# output
+
+128</code></pre><h3 id="Reading-a-composite-type"><a class="docs-heading-anchor" href="#Reading-a-composite-type">Reading a composite type</a><a id="Reading-a-composite-type-1"></a><a class="docs-heading-anchor-permalink" href="#Reading-a-composite-type" title="Permalink"></a></h3><p>In this example, I read the top of a BGZF block header from an <code>AbstractBufReader</code>. This header consists of 8 integers of varying bit-widths, totaling 12 bytes in length. The example shows how I get a buffer of the required size once, then decode from the buffer with <code>@inbounds</code>, for maximal efficiency.</p><pre><code class="language-julia hljs">using BufferIO: AbstractBufReader, get_nonempty_buffer, consume, CursorReader
+using Inscription.Little # little endian encodings/decodings
+using MemoryViews: ImmutableMemoryView
+
+struct Header
+    ID   ::NTuple{2, UInt8}
+    CM   ::UInt8
+    FLG  ::UInt8
+    MTIME::UInt32
+    XFL  ::UInt8
+    OS   ::UInt8
+    XLEN ::UInt16
+end
+
+# For example&#39;s sake, I don&#39;t do validation of individual fields here.
+# If they truly didn&#39;t need validation, the above struct would be
+# `BitsLoadable` (see below), and the implementation could be completely
+# automatically derived.
+function try_load_bgzip_header(io::AbstractBufReader)::Union{Header, Nothing}
+    # `get_nonempty_buffer` promises 12 bytes, or to return `nothing`. But, since
+    # `io` is generic, a user subtype may implement it incorrectly. So, I code
+    # defensively: Typeassert, and check the length afterwards.
+    # For a known AbstractBufReader type, these checks can be elided.
+    buffer = get_nonempty_buffer(io, 12)::Union{Nothing, ImmutableMemoryView{UInt8}}
+    buffer === nothing &amp;&amp; return nothing # EOF before 12 bytes
+    checkbounds(buffer, 12)
+    # Call `decode` in an inbounds context, since we know we have 12 bytes now.
+    header = @inbounds begin
+        Header(
+            decode(buffer, 1, NTuple{2, UInt8}),
+            buffer[3], buffer[4],
+            decode(buffer, 5, UInt32),
+            buffer[9], buffer[10],
+            decode(buffer, 11, UInt16),
+        )
+    end
+    consume(io, 12)
+    return header
+end
+
+rdr = CursorReader(collect(0x00:0xff))
+header = try_load_bgzip_header(rdr)
+
+# output
+
+Header((0x00, 0x01), 0x02, 0x03, 0x07060504, 0x08, 0x09, 0x0b0a)</code></pre><h2 id="Reading-and-writing-custom-types"><a class="docs-heading-anchor" href="#Reading-and-writing-custom-types">Reading and writing custom types</a><a id="Reading-and-writing-custom-types-1"></a><a class="docs-heading-anchor-permalink" href="#Reading-and-writing-custom-types" title="Permalink"></a></h2><p>Inscription.jl requires you to opt in to reading or writing a struct. In the following examples, I&#39;ll demonstrate how to do so. I&#39;ll begin with structs that are easy to read/write, and each example will choose a type that has more complications when reading/writing than the previous one.</p><h3 id="Custom-struct-1:-Entirely-transparent-(BitsLoadable)"><a class="docs-heading-anchor" href="#Custom-struct-1:-Entirely-transparent-(BitsLoadable)">Custom struct 1: Entirely transparent (<code>BitsLoadable</code>)</a><a id="Custom-struct-1:-Entirely-transparent-(BitsLoadable)-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-struct-1:-Entirely-transparent-(BitsLoadable)" title="Permalink"></a></h3><p>This type has no padding, all bit patterns are valid, and its encoding is the same as its constituent bytes. So, it can be read and written via pointer operations. We can make Inscription use those by opting into the <code>BitsLoadable</code> trait. This will automatically make all reading and writing methods work.</p><pre><code class="language-julia hljs">using Inscription.Little
+using BufferIO: CursorReader
+
+struct Point2D
+    x::Float64
+    y::Float64
+end
+
+# Just opt into this trait
+function Inscription.codec_scheme(::Type{Point2D}, ::Inscription.Endianness)
+    Inscription.BitsLoadable()
+end
+
+# Now all writer and reader functions work for big endian and little endian
+# encodings
+rdr = CursorReader(zeros(UInt8, 50))
+point = load(rdr, Point2D)
+
+# output
+
+Point2D(0.0, 0.0)</code></pre><h3 id="Custom-struct-2:-Transparent,-but-need-validation-(BitsStorable)"><a class="docs-heading-anchor" href="#Custom-struct-2:-Transparent,-but-need-validation-(BitsStorable)">Custom struct 2: Transparent, but need validation (<code>BitsStorable</code>)</a><a id="Custom-struct-2:-Transparent,-but-need-validation-(BitsStorable)-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-struct-2:-Transparent,-but-need-validation-(BitsStorable)" title="Permalink"></a></h3><p>This type has no padding, and its encoding is the same as its constituent bytes. However, not all bit patterns are valid. That means it can be read and written via pointer ops, but read instances must be validated. We can do that by opting into the <code>BitsStorable</code> trait, and implementing the validation function <code>validate_bits</code>, which returns <code>nothing</code> for valid bytes, and <code>Invalid()</code> otherwise:</p><pre><code class="language-julia hljs">using Inscription.Little
+using BufferIO: CursorReader
+
+struct EvenInteger
+    x::Int64
+
+    EvenInteger(x::Int64) = isodd(x) ? throw(ArgumentError(&quot;nope!&quot;)) : new(x)
+end
+
+function Inscription.codec_scheme(::Type{EvenInteger}, ::Inscription.Endianness)
+    Inscription.BitsStorable()
+end
+
+function Inscription.validate_bits(::Type{EvenInteger}, bytes::NTuple{8, UInt8})
+    # Validate the bytes are those of an even integer. Here, I choose to use
+    # the helper function as_unsigned
+    u64 = Inscription.as_unsigned(bytes)
+    iseven(u64) ? nothing : Inscription.Invalid()
+end
+
+# Now all writer and reader functions work for big endian and little endian
+# encodings
+rdr = CursorReader(b&quot;44444444444444444&quot;)
+even = load(rdr, EvenInteger)
+
+# output
+
+EvenInteger(3761688987579986996)</code></pre><h3 id="Custom-struct-3:-Forward-to-an-existing-encoding-(Proxy)"><a class="docs-heading-anchor" href="#Custom-struct-3:-Forward-to-an-existing-encoding-(Proxy)">Custom struct 3: Forward to an existing encoding (<code>Proxy</code>)</a><a id="Custom-struct-3:-Forward-to-an-existing-encoding-(Proxy)-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-struct-3:-Forward-to-an-existing-encoding-(Proxy)" title="Permalink"></a></h3><p>This type has padding and so cannot be pointer-loadable. However, we can declare it can be read and written like an equivalent <code>Tuple</code> (which is special-cased by Inscription.jl to ignore padding). We implement the <code>Proxy</code> codec scheme and convert to/from that tuple.</p><p>An odd-sized primitive, such as a 17-bit integer, could use the same mechanism: Load a 32-bit integer, and check the unused 15 bits are zeroed out in <code>try_from_proxy</code>.</p><pre><code class="language-julia hljs">using Inscription.Little
+using BufferIO: CursorReader
+
+struct Padded
+    a::UInt64
+    b::UInt8
+    # N.B: 7 bytes of padding
+end
+
+function Inscription.codec_scheme(::Type{Padded}, ::Inscription.Endianness)
+    Inscription.Proxy{Tuple{UInt64, UInt8}}()
+end
+
+Inscription.try_to_proxy(x::Padded, ::Inscription.Endianness) = (x.a, x.b)
+
+function Inscription.try_from_proxy(
+        ::Type{Padded},
+        x::Tuple{UInt64, UInt8},
+        ::Inscription.Endianness
+    )
+    Padded(x[1], x[2])
+end
+
+# Now all writer and reader functions work for big endian and little endian
+# encodings
+rdr = CursorReader(b&quot;123456789&quot;)
+padded = load(rdr, Padded)
+
+# output
+
+Padded(0x3837363534333231, 0x39)</code></pre><h3 id="Custom-struct-4:-Manual-codec,-fixed-length"><a class="docs-heading-anchor" href="#Custom-struct-4:-Manual-codec,-fixed-length">Custom struct 4: Manual codec, fixed length</a><a id="Custom-struct-4:-Manual-codec,-fixed-length-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-struct-4:-Manual-codec,-fixed-length" title="Permalink"></a></h3><p>Here, I implement an encoding of <code>UInt32</code> that prints it as lowercase hexadecimal digits, left-padded with zeros to 8 characters. Note that while <code>UInt32</code> in little/big endian encoding <strong>is</strong> pointer-readable/writable, its hexadecimal encoding obviously isn&#39;t, so this can be neither <code>BitsLoadable</code> nor <code>BitsStorable</code>. Also, there is no equivalent encoding, so it can&#39;t be a <code>Proxy</code>.</p><p>Note that this example needs to define a new <code>Encoding</code>, and can&#39;t simply be <code>LittleEndian</code>, as that means storing <code>UInt32</code> as binary data.</p><pre><code class="language-julia hljs">using Inscription: Inscription, Encoding, decode, encode!, @?
+
+struct LowerCaseHexadecimal &lt;: Encoding end
+
+function try_hex_digit(byte::UInt8)
+    if in(byte, 0x30:0x39)
+        return byte - 0x30
+    elseif in(byte, 0x61:0x66)
+        return byte - 0x57
+    else
+        return nothing
+    end
+end
+
+function to_hex_digit(u::UInt32)
+    (u &lt; 0x0a ? u + 0x30 : u + 0x57) % UInt8
+end
+
+# `codec_scheme(UInt32, ::LowerCaseHexadecimal)` defaults to `Manual`,
+# and needs three methods to make reading and writing work; implemented below
+
+function Inscription.codec_max_encoded_size(::Type{UInt32}, ::LowerCaseHexadecimal)
+    Val{8}() # Always 8 bytes, hence that&#39;s its max
+end
+
+function Inscription.codec_try_decode(
+        # This type wraps the input memory, or the input reader
+        input::Inscription.DecodeInput,
+        ::Type{UInt32},
+        ::LowerCaseHexadecimal
+    )
+    # Request exactly 8 bytes with `require_bytes`.
+    # If the input ends before that, it returns `TooShort()`.
+    # The `@? x` macro expands to `return x` if x is an error value like
+    # `TooShort` or `Invalid`.
+    # So, the line below means: Get me 8 bytes, or return `TooShort()` from
+    # this function if not available. The latter signals that we need more
+    # bytes to decode a UInt32 in hexadecimal
+    bytes = @? Inscription.require_bytes(input, 8)
+    # 8 hexadecimal digits are 32 bits, so this can&#39;t overflow
+    result = UInt32(0)
+    # `@inbounds` is safe here because `require_bytes` guarantees exactly
+    # 8 bytes.
+    @inbounds for i in 1:8
+        byte = bytes[i]
+        digit = @something try_hex_digit(byte) return Inscription.Invalid()
+        result = (result &lt;&lt; 4) | digit
+    end
+    # Return (value, n bytes read)
+    return (result, 8)
+end
+
+function Inscription.codec_try_encode!(
+        output::Inscription.EncodeOutput,
+        x::UInt32,
+        ::LowerCaseHexadecimal
+    )
+    # `reserve_bytes` is the same as `require_bytes` above, but for `EncodeOutput`
+    bytes = @? Inscription.reserve_bytes(output, 8)
+    @inbounds for i in 8:-1:1
+        (x, r) = divrem(x, UInt32(16))
+        bytes[i] = to_hex_digit(r)
+    end
+    return 8 # return n bytes written
+end
+
+mem = zeros(UInt8, 8)
+encode!(mem, 0x0123abcf, LowerCaseHexadecimal())
+(String(copy(mem)), decode(mem, UInt32, LowerCaseHexadecimal()))
+
+# output
+
+(&quot;0123abcf&quot;, 0x0123abcf)</code></pre><h3 id="Custom-struct-5:-Manual-codec,-variable-length,-with-error-payloads"><a class="docs-heading-anchor" href="#Custom-struct-5:-Manual-codec,-variable-length,-with-error-payloads">Custom struct 5: Manual codec, variable length, with error payloads</a><a id="Custom-struct-5:-Manual-codec,-variable-length,-with-error-payloads-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-struct-5:-Manual-codec,-variable-length,-with-error-payloads" title="Permalink"></a></h3><p>Here, I write <code>UInt32</code> in <em>decimal</em> and <em>without</em> left padding with zeros. This adds two more complications compared to the example above:</p><ul><li>When decoding, the length can be arbitrarily long, since there can be any number of leading zeros</li><li>Even when encoding, the output length is variable.</li></ul><p>Decoding can fail for two reasons: the number may not fit in a <code>UInt32</code>, or there may be no digits. The codec tells them apart with the payload of the <code>Invalid</code> it returns, so that a caller can e.g. try again with a wider integer type. The type of the payloads is declared with <code>codec_decode_invalid_type</code>, and the payload of the <code>DecodeError</code> is <code>Some(Overflow)</code> or <code>Some(NoDigits)</code>.</p><pre><code class="language-julia hljs">using Inscription: Inscription, Encoding, DecodeError, load, store, try_load, @?
+using BufferIO: CursorReader, VecWriter
+
+struct ASCIIDecimal &lt;: Encoding end
+
+@enum ParseError::UInt8 NoDigits Overflow
+
+Inscription.codec_decode_invalid_type(::Type{UInt32}, ::ASCIIDecimal) = ParseError
+
+function Inscription.codec_max_encoded_size(::Type{UInt32}, ::ASCIIDecimal)
+    # If the encoding had disallowed leading zeros, this could have been
+    # Val{10}(), the maximal length of UInt32 in decimal.
+    Inscription.Unbounded()
+end
+
+function Inscription.codec_try_decode(
+        input::Inscription.DecodeInput,
+        ::Type{UInt32},
+        ::ASCIIDecimal
+    )
+    value = UInt64(0)
+    n_bytes_read = 0
+    while true
+        # `peek_byte` loads a byte, or returns `nothing` if the input ends
+        # before it. When loading from a reader, it buffers more bytes if
+        # needed. It can also return `TooShort()`, which the `@?` macro
+        # returns early, if the bytes are only the start of the input.
+        byte = @? Inscription.peek_byte(input, n_bytes_read + 1)
+        # Stop at the end of the input, or the first byte that isn&#39;t a digit
+        (byte !== nothing &amp;&amp; in(byte, 0x30:0x39)) || break
+        value = value * 10 + (byte - 0x30)
+        value &gt; typemax(UInt32) &amp;&amp; return Inscription.Invalid(Overflow)
+        n_bytes_read += 1
+    end
+    iszero(n_bytes_read) &amp;&amp; return Inscription.Invalid(NoDigits)
+    return (value % UInt32, n_bytes_read)
+end
+
+# This is easier, since we always encode without leading zeros
+function Inscription.codec_try_encode!(
+        output::Inscription.EncodeOutput,
+        x::UInt32,
+        ::ASCIIDecimal
+    )
+    nd = ndigits(x)
+    mem = @? Inscription.reserve_bytes(output, nd)
+    for i in nd:-1:1
+        (x, r) = divrem(x, UInt32(10))
+        @inbounds mem[i] = (r + 0x30) % UInt8
+    end
+    return nd
+end
+
+wtr = VecWriter()
+store(wtr, UInt32(123), ASCIIDecimal())
+rdr = CursorReader(&quot;00456 &quot;)
+err = try_load(CursorReader(&quot;4294967296&quot;), UInt32, ASCIIDecimal())
+(String(wtr.vec), load(rdr, UInt32, ASCIIDecimal()), err.payload)
+
+# output
+
+(&quot;123&quot;, 0x000001c8, Some(Overflow))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../usage/">« Usage</a><a class="docs-footer-nextpage" href="../custom/">Implementing a type »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.20.0 on <span class="colophon-date" title="Saturday 28 November 2026 14:50">Saturday 28 November 2026</span>. Using Julia version 1.13.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
